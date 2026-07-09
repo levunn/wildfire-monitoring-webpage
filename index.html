@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Deep learning for near real-time wildfire monitoring using GOES and VIIRS satellite imagery. University of Nevada, Reno.">
+  <title>Wildfire Monitoring with Deep Learning — UNR</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Noto+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <style>
+    :root {
+      --ink: #1c2128;
+      --muted: #5b6470;
+      --paper: #fbfaf7;
+      --line: #e4e1da;
+      --ember: #d1490f;
+      --ember-dark: #a33608;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Noto Sans', sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+      line-height: 1.7;
+    }
+    h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; line-height: 1.25; }
+    a { color: var(--ember); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: 880px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* ---------- Nav ---------- */
+    nav { border-bottom: 1px solid var(--line); background: var(--paper); }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.8rem 1.5rem; max-width: 880px; margin: 0 auto;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 0.7rem; }
+    .nav-brand img { height: 34px; width: auto; }
+    .nav-brand span {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700; font-size: 0.98rem;
+    }
+    .nav-links { display: flex; gap: 1.3rem; font-size: 0.9rem; }
+    .nav-links a { color: var(--muted); }
+    .nav-links a:hover { color: var(--ember); text-decoration: none; }
+    @media (max-width: 600px) { .nav-links { display: none; } }
+
+    /* ---------- Hero ---------- */
+    header.hero {
+      position: relative;
+      color: #f2efe9;
+      padding: 7rem 0 6rem;
+      background:
+        linear-gradient(180deg, rgba(10,16,26,0.55) 0%, rgba(10,16,26,0.78) 100%),
+        url("static/images/hero.png") center / cover no-repeat,
+        url("https://www.noaa.gov/sites/default/files/styles/landscape_width_1275/public/2024-06/GOES-UEarthandSun.png") center / cover no-repeat,
+        #0a101a;
+    }
+    .hero h1 {
+      font-size: clamp(1.9rem, 5vw, 2.9rem);
+      font-weight: 700;
+      max-width: 720px;
+      margin-bottom: 1rem;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+    }
+    .hero p.lede {
+      max-width: 620px;
+      font-size: 1.05rem;
+      color: #e2e6eb;
+      margin-bottom: 2rem;
+      text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.65rem 1.3rem; border-radius: 6px;
+      font-family: 'Space Grotesk', sans-serif; font-weight: 500;
+      font-size: 0.95rem;
+    }
+    .btn:hover { text-decoration: none; }
+    .btn-primary { background: var(--ember); color: #fff; }
+    .btn-primary:hover { background: var(--ember-dark); }
+    .btn-ghost { border: 1px solid rgba(255,255,255,0.5); color: #f2efe9; margin-left: 0.6rem; }
+    .btn-ghost:hover { border-color: #f0a06a; color: #f0a06a; }
+    .hero-credit {
+      position: absolute; right: 1rem; bottom: 0.6rem;
+      font-size: 0.7rem; color: rgba(255,255,255,0.55);
+    }
+    .hero-credit a { color: rgba(255,255,255,0.65); }
+
+    /* ---------- Sections ---------- */
+    section { padding: 3.5rem 0; }
+    section h2 { font-size: 1.55rem; margin-bottom: 1.2rem; }
+    section p + p { margin-top: 1rem; }
+    .alt { background: #f3f1ec; }
+
+    /* ---------- Viewer link ---------- */
+    .viewer-banner {
+      background: #17212c;
+      border-radius: 12px;
+      color: #f2efe9;
+      padding: 2rem;
+      display: flex; flex-wrap: wrap; align-items: center;
+      justify-content: space-between; gap: 1.2rem;
+      margin-top: 2rem;
+    }
+    .viewer-banner h3 { font-size: 1.25rem; margin-bottom: 0.3rem; }
+    .viewer-banner p { color: #b9c2cc; font-size: 0.93rem; max-width: 460px; }
+
+    /* ---------- Team ---------- */
+    .team-grid {
+      display: grid; gap: 1.6rem;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      margin-top: 1.5rem;
+    }
+    .member { text-align: center; }
+    .member .avatar {
+      width: 110px; height: 110px; border-radius: 50%;
+      background: #e8e4dc; border: 1px solid var(--line);
+      margin: 0 auto 0.7rem;
+      display: flex; align-items: center; justify-content: center;
+      color: #9a938a; font-size: 1.6rem; overflow: hidden;
+    }
+    .member .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .member h3 { font-size: 0.98rem; }
+    .member p { font-size: 0.83rem; color: var(--muted); }
+
+    /* ---------- Publications ---------- */
+    .pub {
+      border-left: 3px solid var(--ember);
+      padding: 0.2rem 0 0.2rem 1.1rem;
+      margin-bottom: 1.3rem;
+    }
+    .pub .pub-title { font-weight: 600; }
+    .pub .pub-meta { font-size: 0.88rem; color: var(--muted); }
+    .pub .pub-links { font-size: 0.88rem; }
+
+    /* ---------- Footer ---------- */
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 2.2rem 0;
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+    .footer-inner {
+      display: flex; flex-wrap: wrap; gap: 1.5rem;
+      align-items: center; justify-content: space-between;
+    }
+    .footer-inner img { height: 40px; width: auto; opacity: 0.85; }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===================== Nav ===================== -->
+  <nav>
+    <div class="nav-inner">
+      <div class="nav-brand">
+        <!-- Lab logo: place file at static/images/lab_logo.png -->
+        <img src="static/images/lab_logo.png" alt="Lab logo" onerror="this.style.display='none'">
+        <span>Wildfire Monitoring · UNR</span>
+      </div>
+      <div class="nav-links">
+        <a href="#about">About</a>
+        <a href="#viewer">Live Viewer</a>
+        <a href="#team">Team</a>
+        <a href="#publications">Publications</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===================== Hero ===================== -->
+  <header class="hero">
+    <div class="wrap">
+      <h1>Deep Learning for Near Real-Time Wildfire Monitoring</h1>
+      <p class="lede">
+        Fusing the minutes-scale revisit of geostationary satellites with the
+        fine spatial detail of polar-orbiting sensors to map active wildfires
+        as they evolve.
+      </p>
+      <a class="btn btn-primary" href="#viewer">
+        <i class="fas fa-satellite-dish"></i> Live Fire Viewer
+      </a>
+      <a class="btn btn-ghost" href="#publications">
+        <i class="fas fa-file-lines"></i> Publications
+      </a>
+    </div>
+    <div class="hero-credit">
+      Image: NOAA (artist's rendering of the GOES-U satellite, public domain)
+    </div>
+  </header>
+
+  <!-- ===================== About ===================== -->
+  <section id="about">
+    <div class="wrap">
+      <h2>About the Project</h2>
+      <p>
+        Geostationary satellites such as GOES observe the western U.S. every few
+        minutes but at kilometer-scale pixels, while polar-orbiting sensors such
+        as VIIRS resolve fires at 375 m yet revisit only a few times per day.
+        Neither alone supports timely, detailed wildfire monitoring.
+      </p>
+      <p>
+        This project develops deep learning models trained on spatiotemporally
+        paired GOES and VIIRS observations. The models jointly super-resolve
+        GOES imagery and detect active fire pixels, with preprocessing steps
+        that reduce noise, correct artifacts, and improve alignment between the
+        two satellite sources. The result is a pipeline that estimates fire
+        location and brightness temperature at VIIRS-like resolution from each
+        GOES acquisition, supporting more accurate and timely wildfire
+        detection, monitoring, and response.
+      </p>
+
+      <!-- ===================== Live viewer ===================== -->
+      <div class="viewer-banner" id="viewer">
+        <div>
+          <h3><i class="fas fa-satellite-dish"></i> Fire Watch Console</h3>
+          <p>
+            An interactive map viewer showing super-resolved satellite imagery
+            and predicted fire masks with time-series playback for recent fire
+            events.
+          </p>
+        </div>
+        <!-- Replace href with the public URL of the monitoring site -->
+        <a class="btn btn-primary" href="https://your-viewer-url.example.com" target="_blank" rel="noopener">
+          Launch Viewer <i class="fas fa-arrow-up-right-from-square"></i>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== Team ===================== -->
+  <section id="team" class="alt">
+    <div class="wrap">
+      <h2>Team</h2>
+      <div class="team-grid">
+        <div class="member">
+          <div class="avatar"><i class="fas fa-user"></i></div>
+          <h3>Faculty Name</h3>
+          <p>Principal Investigator</p>
+        </div>
+        <div class="member">
+          <div class="avatar"><i class="fas fa-user"></i></div>
+          <h3>Student Name</h3>
+          <p>Ph.D. Student</p>
+        </div>
+        <div class="member">
+          <div class="avatar"><i class="fas fa-user"></i></div>
+          <h3>Collaborator Name</h3>
+          <p>Role, Affiliation</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== Publications ===================== -->
+  <section id="publications">
+    <div class="wrap">
+      <h2>Publications</h2>
+
+      <div class="pub">
+        <div class="pub-title">
+          Deep Learning Approach to Improve Spatial Resolution of GOES-17
+          Wildfire Boundaries Using VIIRS Satellite Data
+        </div>
+        <div class="pub-meta">
+          Badhan, M., Shamsaei, K., Ebrahimian, H., Bebis, G., Lareau, N. P.,
+          &amp; Rowell, E. (2024). Remote Sensing, 16(4), 715.
+        </div>
+        <div class="pub-links">
+          <a href="https://www.mdpi.com/2072-4292/16/4/715" target="_blank" rel="noopener">
+            [paper] <i class="fas fa-arrow-up-right-from-square" style="font-size:0.75em;"></i>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===================== Footer ===================== -->
+  <footer>
+    <div class="wrap footer-inner">
+      <div style="display:flex; align-items:center; gap:1rem;">
+        <img src="static/images/lab_logo.png" alt="Lab logo" onerror="this.style.display='none'">
+        <img src="static/images/unr_logo.png" alt="University of Nevada, Reno" onerror="this.style.display='none'">
+      </div>
+      <div>
+        © 2026 Wildfire Monitoring Project, University of Nevada, Reno ·
+        <a href="mailto:contact@example.edu">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
